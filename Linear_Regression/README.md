@@ -1,18 +1,19 @@
-# Linear Regression
+# Linear Regression – Notes & Applied Project
 
-This folder contains my learning notes and an applied end-to-end project on **Linear Regression**.
+This folder contains my learning notes and an end-to-end implementation of
+Linear Regression using the California Housing dataset.
 
-## What I covered
-- Intuition behind Linear Regression
-- Mathematical formulation
-- Assumptions of Linear Regression
+## Concepts Covered
+- Linear Regression fundamentals
+- Feature scaling using StandardScaler
 - Model training and evaluation
-- House Price Prediction project
+- Ridge and Lasso regularization
+- RMSE and R² metrics
 
-## Project
-**House Price Prediction**
-- Dataset: California Housing Dataset
-- Model: Linear Regression
-- Tools: Python, NumPy, Pandas, scikit-learn
+## Files
+- linear_regression_california_housing.ipynb  
+- Model.pkl  
+- scaler.pkl
 
-This folder will be updated as I continue learning Machine Learning.
+## Tools
+Python, NumPy, Pandas, Matplotlib, Scikit-learn
