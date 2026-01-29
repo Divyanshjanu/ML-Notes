@@ -11,7 +11,7 @@ Linear Regression using the California Housing dataset.
 - RMSE and R² metrics
 
 ## Files
-- linear_regression_california_housing.ipynb  
+- Predicting_House_prices.ipynb  
 - Model.pkl  
 - scaler.pkl
 
