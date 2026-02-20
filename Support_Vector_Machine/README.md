@@ -1,209 +1,168 @@
-# 🔷 Support Vector Machine – Red Wine Quality Classification
+# 🔷 Support Vector Machine – Red Wine Quality
 
 ## 📌 Overview
 
-This project implements a complete **Support Vector Machine (SVM)** pipeline to predict red wine quality as a **binary classification** task (**bad** vs **good**). The notebook walks from raw data to a tuned, class‑weighted SVM model, including:
+This project builds a complete **Support Vector Machine (SVM)** pipeline to predict red wine quality as a **binary classification** task (**bad** vs **good**). It covers:
 
 - 📊 Exploratory Data Analysis (EDA)  
 - 🧹 Targeted outlier removal  
 - ⚙️ Feature scaling and preprocessing  
-- 🔎 Hyperparameter tuning (Grid & Random search)  
-- ✅ Final evaluation with classification reports and confusion matrices  
+- 🔎 Hyperparameter tuning (GridSearchCV & RandomizedSearchCV)  
+- ✅ Evaluation with classification reports and confusion matrices  
 
-The objective is to build a well‑documented, reproducible ML workflow that generalizes well to unseen wine samples.
-
----
-
-## 🎯 Problem Definition
-
-The original dataset contains physicochemical properties of red wines and a human‑assigned quality score (integer from 3 to 8). For this project, the `quality` label is transformed into a binary target:
-
-- `0` → **bad** quality wine (scores 2–6.5)  
-- `1` → **good** quality wine (scores 6.5–8)  
-
-The task is to learn a classifier that predicts this binary label from the chemical features.
+The goal is a clean, well‑documented example of an end‑to‑end ML workflow.
 
 ---
 
-## 📂 Dataset
+## 🎯 Problem & Dataset
 
-- **Source:** Red wine quality dataset (UCI Wine Quality)  
-- **File:** `winequality-red.csv`  
-- **Samples:** 1599  
-- **Features (11 numeric):**
+- Original label `quality`: integers 3–8  
+- Binary target used here:
 
-  - fixed acidity  
-  - volatile acidity  
-  - citric acid  
-  - residual sugar  
-  - chlorides  
-  - free sulfur dioxide  
-  - total sulfur dioxide  
-  - density  
-  - pH  
-  - sulphates  
-  - alcohol  
+  - `0` → **bad** (scores 2–6.5)  
+  - `1` → **good** (scores 6.5–8)
 
-- **Target:**  
-  - `quality` (3–8) → transformed to `bad` / `good` → encoded as `0` / `1`
+- File: `winequality-red.csv` (UCI Wine Quality)  
+- Samples: 1599  
+- Numeric features (11):
 
-**EDA includes:**
+  `fixed acidity`, `volatile acidity`, `citric acid`, `residual sugar`,  
+  `chlorides`, `free sulfur dioxide`, `total sulfur dioxide`, `density`,  
+  `pH`, `sulphates`, `alcohol`
 
-- Basic info: `shape`, `info()`, `describe()`  
-- Missing‑value check: `isnull().sum()` (no missing values)  
-- Class balance: `quality.value_counts()`  
-- Visuals: correlation heatmap, histograms, and boxplots for outlier inspection  
+EDA includes:
+
+- `shape`, `info()`, `describe()`, `isnull().sum()`  
+- `quality.value_counts()` to inspect imbalance  
+- Correlation heatmap, feature histograms, and boxplots for outliers
 
 ---
 
-## 🧪 Methodology
+## 🧪 Methodology (Pipeline)
 
-The notebook follows a clear, step‑by‑step pipeline:
+1️⃣ **EDA**  
+Inspect structure, correlations, distributions, and potential outliers.
 
-### 1️⃣ Exploratory Data Analysis (EDA)
+2️⃣ **Outlier Removal (IQR)**  
+Applied only to:
 
-- Inspect data types and summary statistics for all features.  
-- Plot a correlation heatmap to see how features relate to `quality`.  
-- Draw histograms to observe distributions, skewness, and potential outliers.  
-- Use boxplots on the original data to visually highlight extreme values.
+- `residual sugar`, `chlorides`, `free sulfur dioxide`, `total sulfur dioxide`
 
----
+For each column:
 
-### 2️⃣ Outlier Handling
+- Compute Q1, Q3, IQR = Q3 − Q1  
+- Keep rows with values in  
 
-Outliers are removed **only** from features with strong skew or heavy tails:
+  \[
+  [Q1 - 2.0 \times IQR,\; Q3 + 2.0 \times IQR]
+  \]
 
-- `residual sugar`  
-- `chlorides`  
-- `free sulfur dioxide`  
-- `total sulfur dioxide`  
+Result: cleaned dataframe `df_clean` with extreme outliers reduced but most data preserved.
 
-For each selected feature:
+3️⃣ **Target Transformation**
 
-- Compute **Q1**, **Q3**, and **IQR**  
-- Define bounds:  
-  - **lower** = Q1 − 2.0 × IQR  
-  - **upper** = Q3 + 2.0 × IQR  
-- Filter rows outside `[lower, upper]`
+- Ensure `quality` is numeric and drop invalid entries.  
+- Use `pd.cut` to map scores into `bad` / `good`.  
+- Use `LabelEncoder` so `bad → 0`, `good → 1`.
 
-The cleaned dataframe `df_clean` keeps most samples while reducing the impact of extreme values. Updated boxplots confirm that the most severe outliers are removed without destroying the overall distributions.
+4️⃣ **Feature / Target Split & Scaling**
 
----
-
-### 3️⃣ Target Transformation
-
-The `quality` column is converted to a binary target in three steps:
-
-1. Ensure `quality` is numeric and drop any invalid entries.  
-2. Use `pd.cut` to map scores into two bins:
-
-   - (2, 6.5] → `bad`  
-   - (6.5, 8] → `good`
-
-3. Apply `LabelEncoder`:
-
-   - `bad` → `0`  
-   - `good` → `1`  
-
-This turns the original multi‑class problem into a clean binary classification task.
-
----
-
-### 4️⃣ Feature–Target Split & Scaling
-
-- **Features (`X`):** all 11 numeric physicochemical columns  
-- **Target (`y`):** encoded binary `quality` (0 / 1)
+- `X`: all 11 numeric features  
+- `y`: encoded binary `quality`  
 
 Train–test split:
 
-- 80% training, 20% testing  
-- `stratify=y` to preserve class ratios  
-- Fixed `random_state` for reproducibility  
+- 80% train, 20% test  
+- `stratify=y`, fixed `random_state`
 
 Scaling:
 
-- Use `StandardScaler`  
-- Fit the scaler on `X_train` only  
-- Transform both `X_train` and `X_test` with the fitted scaler  
+- Fit `StandardScaler` on `X_train`  
+- Transform both `X_train` and `X_test` (no leakage)
 
-This avoids data leakage and ensures SVM sees features on a comparable scale.
+5️⃣ **Baseline SVM**
 
----
+- Train SVC with `class_weight='balanced'` on scaled data.  
+- Use test accuracy as baseline before tuning.
 
-### 5️⃣ Baseline SVM Model
+6️⃣ **Hyperparameter Tuning**
 
-A first SVM classifier is trained with:
+Parameters explored:
 
-- `class_weight='balanced'` ⚖️ to handle label imbalance  
+- `C` ∈ {0.1, 1, 10}  
+- `kernel` ∈ {`linear`, `rbf`}  
+- `gamma` ∈ {`scale`, `auto`, numeric}
 
-The baseline model is trained on the scaled training data and evaluated on the test set to establish a reference accuracy before tuning.
+- **GridSearchCV** (5‑fold CV) → `best_model_1`  
+- **RandomizedSearchCV** (5‑fold CV) → `best_model_2`
 
----
+7️⃣ **Evaluation**
 
-### 6️⃣ Hyperparameter Tuning
-
-To improve performance, the following hyperparameters are tuned:
-
-- `C` (regularization strength)  
-- `kernel` (`linear`, `rbf`)  
-- `gamma` (`scale`, `auto`, and numeric values)
-
-#### 🔷 GridSearchCV
-
-- Exhaustive search over the parameter grid  
-- 5‑fold cross‑validation  
-- Returns `best_model_1` – the best SVM configuration on the training set
-
-#### 🔹 RandomizedSearchCV (Optional Comparison)
-
-- Random sampling of parameter combinations from the same grid  
-- Also uses 5‑fold cross‑validation  
-- Returns `best_model_2` – another strong candidate model  
-
-Both tuned models are later compared on the test set.
-
----
-
-### 7️⃣ Evaluation
-
-For each tuned model:
+For each best model:
 
 - Predict on `X_test`  
-- Compute:  
-  - ✅ Overall accuracy  
-  - 📄 Classification report (precision, recall, F1, support)  
-  - 🔢 Confusion matrix  
+- Compute accuracy and classification report  
+- Compute and plot confusion matrix (heatmap)
 
-- Plot confusion matrix heatmaps with labelled axes, making it easy to see:
+Typical performance (approx.):
 
-  - True negatives (correctly predicted bad wines)  
-  - True positives (correctly predicted good wines)  
-  - False positives & false negatives  
+- Test accuracy ≈ **90–91%**  
+- Class 0 (bad): very high precision & recall  
+- Class 1 (good): high precision, moderate recall (class imbalance)
 
-**Typical performance (approx.):**
-
-- Test accuracy ≈ **91%**  
-- Class `0` (bad): very high precision and recall  
-- Class `1` (good): high precision, moderate recall (due to class imbalance)
-
-The model prefers to avoid misclassifying bad wines as good, which is often a reasonable trade‑off.
+Train and test scores are close → no strong overfitting.
 
 ---
 
-## 📈 Results Summary
+## 🧠 How SVM Works (Short Math Intuition)
 
-- A class‑weighted SVM with an RBF kernel and tuned `C`/`gamma` achieves the best overall performance.  
-- Train and test scores are close, suggesting no strong overfitting.  
-- The final model serves as a solid baseline for red wine quality prediction and a clean template for SVM workflows on similar tabular datasets.
+SVM tries to learn a decision boundary (hyperplane):
 
----
+\[
+w^\top x + b = 0
+\]
 
-## 📁 Project Structure
+A point is classified by the sign of \(w^\top x + b\).
 
-Suggested layout for this folder:
+### Maximum margin idea
 
-```text
-Support_Vector_Machine/
-├─ SVM.ipynb              # Main notebook with full pipeline
-├─ winequality-red.csv    # Dataset (if stored locally)
-└─ README.md              # Project documentation
+For linearly separable data, SVM finds the hyperplane with the **largest margin** to the closest points (support vectors):
+
+\[
+\min_{w, b} \frac{1}{2} \lVert w \rVert^2
+\]
+
+subject to
+
+\[
+y_i (w^\top x_i + b) \ge 1
+\]
+
+### Soft margin and \(C\)
+
+Real data is noisy, so SVM allows margin violations using slack variables \(\xi_i\) and a penalty parameter \(C\):
+
+\[
+\min_{w, b, \xi} \frac{1}{2} \lVert w \rVert^2 + C \sum_i \xi_i
+\]
+
+Larger \(C\) → less tolerance to errors (tighter fit).  
+Smaller \(C\) → more tolerance (stronger regularization).  
+In this project, \(C\) is tuned during Grid/Random search.
+
+### Kernels & \(\gamma\)
+
+For non‑linear patterns, SVM uses kernels, e.g. RBF:
+
+\[
+K(x_i, x_j) = \exp(-\gamma \lVert x_i - x_j \rVert^2)
+\]
+
+- Small \(\gamma\): smoother, more global decision boundary.  
+- Large \(\gamma\): more complex, risk of overfitting.
+
+The best models here use an RBF kernel with tuned `C` and `gamma`.
+
+### Class weights
+
+With imbalanced labels, `class_weight='balanced'` automatically scales penalties so mistakes on the minority class (good wines) matter more during training.
