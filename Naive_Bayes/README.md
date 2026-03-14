@@ -174,7 +174,7 @@ Tested on **10,000 reviews** — solid result for such a simple model with minim
 Naive_Bayes/
 ├── README.md
 ├── Naive_bayes_sentiment_analysis.ipynb
-└── IMDB Dataset.csv 
+└── IMDB Dataset.csv ( Download it from Kaggle )
 ```
 
 ---
